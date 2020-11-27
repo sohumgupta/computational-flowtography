@@ -4,6 +4,7 @@ import cv2
 import os
 from helper import load_video
 from visualization import show_optical_flow
+from flow import naive_optical_flow
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Calculating and using optical flow for videos!')
@@ -18,12 +19,12 @@ def main():
 
 	data_path = '../data'
 	video_path = os.path.join(data_path, args.data)
-	video_frames = load_video(video_path)
+	frames = load_video(video_path)
+	frames = frames[0:10]
 
-	video_frames = video_frames[0:5]
-
-	flow = np.random.rand(video_frames.shape[0], video_frames.shape[1] // 10, video_frames.shape[2] // 10, 2)
-	show_optical_flow(video_frames, flow * 5, (10, 10))
+	patch_size = (10, 10)
+	flow = naive_optical_flow(frames, patch_size)
+	show_optical_flow(frames, flow, patch_size)
 
 if __name__ =="__main__":
 	main()
