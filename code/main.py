@@ -3,15 +3,19 @@ import argparse
 import cv2
 import os
 from helper import load_video
-from visualization import show_optical_flow
-from flow import naive_optical_flow
+from visualization import show_optical_flow, show_object_tracking
+from flow import naive_optical_flow, naive_object_tracking
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Calculating and using optical flow for videos!')
 	parser.add_argument('data', type=str, help='Name of input video (in data directory)')
-	# parser.add_argument('--object-tracking', 
-    #                 help='Optional argument for object tracking')
+	parser.add_argument('--tracking', action='store_true',
+                    help='Optional argument for object tracking')
+	parser.add_argument('--track_x', type=int, help="x-position for object to track")
+	parser.add_argument('--track_y', type=int, help="y-position for object to track")
 	args = parser.parse_args()
+	if (args.tracking and not (args.track_x and args.track_y)):
+		parser.error("--tracking requires --track_x and --track_y.")
 	return args
 
 def main():
@@ -22,9 +26,14 @@ def main():
 	frames = load_video(video_path)
 	frames = frames[0:10]
 
-	patch_size = (10, 10)
-	flow = naive_optical_flow(frames, patch_size)
-	show_optical_flow(frames, flow, patch_size)
+	if (args.tracking):
+		patch_size = (10, 10)
+		flow = naive_object_tracking(frames, (args.track_y, args.track_x), patch_size)
+		show_object_tracking(frames, flow, (args.track_y, args.track_x))
+	else:
+		patch_size = (10, 10)
+		flow = naive_optical_flow(frames, patch_size)
+		show_optical_flow(frames, flow, patch_size)
 
 if __name__ =="__main__":
 	main()

@@ -35,3 +35,32 @@ def naive_optical_flow(frames, patch_size):
 				sys.stdout.flush()
 	
 	return flow
+
+def naive_object_tracking(frames, location, patch_size):
+	num_frames, height, width, channels = frames.shape
+	flow = np.zeros((num_frames, 2))
+
+	cur_location = location
+	for f in range(num_frames-1):
+		print(f"Tracking location for frame {f} -> {f+1}...")
+		cur_frame, next_frame = frames[f], frames[f+1]
+
+		cur_patch = cur_frame[
+			cur_location[0]:cur_location[0]+patch_size[0],
+			cur_location[1]:cur_location[1]+patch_size[1]
+		]
+
+		best_patch, best_ssd = (0, 0), float('inf')
+		for i in range(-patch_size[0] // 2, patch_size[0] // 2):
+			for j in range(-patch_size[1] // 2, patch_size[1] // 2):
+				next_patch = next_frame[
+					max(0, cur_location[0] + i):cur_location[0] + i + patch_size[0], 
+					max(0, cur_location[1] + j):cur_location[1] + j + patch_size[1]
+				]
+				if next_patch.shape != cur_patch.shape: continue
+				error = ssd(cur_patch, next_patch)
+				if error < best_ssd: 
+					best_patch, best_ssd = (j, i), error
+		flow[f] = np.array(best_patch)
+		cur_location = (cur_location[0] + best_patch[1], cur_location[1] + best_patch[0])
+	return flow
