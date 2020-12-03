@@ -42,18 +42,19 @@ def main():
 	
 
 	if (args.tracking):
+		frames = frames[0:300]
 		patch_size = 5
 		flow = object_tracking(frames, (args.track_y, args.track_x), patch_size)
 		out_frames = show_object_tracking(frames, flow, (args.track_y, args.track_x))
 	else:
 		frames = frames[0:10]
 		patch_size = 5
-		stride = 10
+		stride = 5
 		flow = optical_flow(frames, patch_size, stride)
-		out_frames = show_optical_flow(frames, flow, (stride, stride))
+		# out_frames = show_optical_flow(frames, flow, stride)
 
 	if(args.heatmap):
-		heatmap(flow)
+		out_frames = heatmap(flow)
 	
 	if (args.output_path is not None):
 		write_video(out_frames, args.output_path)
