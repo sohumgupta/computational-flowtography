@@ -102,9 +102,11 @@ def lucas_kanade(frames, patch_size=5, stride=1):
 				u, v = x[0:2, 0]
 				flow[f, i, j] = [u, v]
 				sys.stdout.flush()
+		
+		MED_FILTER_SIZE = 7
 		#median filter u and v coordinates for each frame
-		flow[f,:,:,0] = ndimage.median_filter(flow[f,:,:,0], size=10)
-		flow[f,:,:,1] = ndimage.median_filter(flow[f,:,:,1], size=10)
+		flow[f,:,:,0] = ndimage.median_filter(flow[f,:,:,0], size=MED_FILTER_SIZE)
+		flow[f,:,:,1] = ndimage.median_filter(flow[f,:,:,1], size=MED_FILTER_SIZE)
 	
 	print("\n")
 
