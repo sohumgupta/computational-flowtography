@@ -10,9 +10,9 @@ import io
 def show_optical_flow(frames, flow, strides):
 	output_frames = []
 
-	num_frames, height, width, channels = frames.shape
+	num_frames, height, width, _ = frames.shape
 
-	# plt.ion() @sohum should i keep these?
+	# plt.ion() 
 	for (i, frame) in enumerate(frames):
 		fig = plt.figure()
 
@@ -24,10 +24,19 @@ def show_optical_flow(frames, flow, strides):
 			for row in range(cur_flow.shape[0]):
 				for col in range(cur_flow.shape[1]):
 					if (cur_flow[row, col, 0] == 0 and cur_flow[row, col, 1] == 0): continue
-					plt.arrow(col * strides[0] + strides[0] // 2, row * strides[1] + strides[1] // 2, cur_flow[row, col, 0], cur_flow[row, col, 1], color="red")
+					start_x, start_y = col * strides[0] + strides[0] // 2, row * strides[1] + strides[1] // 2
+					flow_x, flow_y = cur_flow[row, col, 0], cur_flow[row, col, 1]
+					if (flow_x > .1): flow_x = .1
+					if (flow_x < -.1): flow_x = -.1
+
+					if (flow_y > .1): flow_y = .1
+					if (flow_y < -.1): flow_y = -.1
+					plt.arrow(start_x, start_y, flow_x * 100, flow_y * 100, color="red")
 		plot_img_np = get_img_from_fig(fig).astype('float32')
 		output_frames.append(plot_img_np)		
+		# plt.pause(1)
 	# plt.ioff()
+	# plt.show()
 
 	return output_frames
 
@@ -56,7 +65,6 @@ def show_object_tracking(frames, flow, location):
 	# plt.ioff()
 
 	return output_frames
-
 
 #taken from https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array
 # define a function which returns an image as numpy array from figure
