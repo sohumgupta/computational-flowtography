@@ -71,6 +71,8 @@ def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
 
 def lucas_kanade(frames, patch_size=5, stride=1):
+	PYRAMID_LEVELS = 3
+
 	num_frames, height, width, channels = frames.shape
 	flow = np.zeros((num_frames, height // stride, width // stride, 2))
 
@@ -79,37 +81,63 @@ def lucas_kanade(frames, patch_size=5, stride=1):
 		cur_frame, next_frame = frames[f], frames[f+1]
 		cur_frame, next_frame = rgb2gray(cur_frame), rgb2gray(next_frame)
 
-		cur_x = cv2.Sobel(cur_frame, cv2.CV_64F, 1, 0, ksize=patch_size)
-		cur_y = cv2.Sobel(cur_frame, cv2.CV_64F, 0, 1, ksize=patch_size)
-		kernel_t = np.ones((patch_size, patch_size)) / (patch_size * patch_size)
-		cur_t = convolve2d(cur_frame, kernel_t, boundary='symm', mode='same') + convolve2d(next_frame, -kernel_t, boundary='symm', mode='same')
+		cur_frame_pyramid, next_frame_pyramid = gaussian_pyramids(cur_frame, next_frame, PYRAMID_LEVELS) #TODO this calculates every pyramid twice which is inefficient
 
-		half_patch = patch_size // 2
-		for i in range(height // stride):
-			for j in range(width // stride):
-				sys.stdout.write(f"\rFinding best match for pixel ({(i + 1) * stride}/{height}, {(j + 1) * stride}/{width})")
+		for level in range(PYRAMID_LEVELS + 1):
+			cur_frame = cur_frame_pyramid[level]
+			next_frame = next_frame_pyramid[level]
 
-				i_range_s, i_range_e = max(0, (i * stride - half_patch)), (i * stride + (patch_size - half_patch))
-				j_range_s, j_range_e = max(0, (j * stride - half_patch)), (j * stride + (patch_size - half_patch))
-				
-				cur_patch_x = cur_x[i_range_s:i_range_e, j_range_s:j_range_e]
-				cur_patch_y = cur_y[i_range_s:i_range_e, j_range_s:j_range_e]
-				cur_patch_t = cur_t[i_range_s:i_range_e, j_range_s:j_range_e]
+			cur_x = cv2.Sobel(cur_frame, cv2.CV_64F, 1, 0, ksize=patch_size)
+			cur_y = cv2.Sobel(cur_frame, cv2.CV_64F, 0, 1, ksize=patch_size)
+			kernel_t = np.ones((patch_size, patch_size)) / (patch_size * patch_size)
+			cur_t = convolve2d(cur_frame, kernel_t, boundary='symm', mode='same') + convolve2d(next_frame, -kernel_t, boundary='symm', mode='same')
 
-				A = np.stack([cur_patch_x.flatten(), cur_patch_y.flatten()], axis=1)
-				b = np.reshape(cur_patch_t.flatten(), (-1, 1))
-				x = np.linalg.lstsq(A, b, rcond=None)[0]
-				u, v = x[0:2, 0]
-				flow[f, i, j] = [u, v]
-				sys.stdout.flush()
-		
-		MED_FILTER_SIZE = 7
-		#median filter u and v coordinates for each frame
-		flow[f,:,:,0] = ndimage.median_filter(flow[f,:,:,0], size=MED_FILTER_SIZE)
-		flow[f,:,:,1] = ndimage.median_filter(flow[f,:,:,1], size=MED_FILTER_SIZE)
+			half_patch = patch_size // 2
+			for i in range(height // stride):
+				for j in range(width // stride):
+					sys.stdout.write(f"\rFinding best match for pixel ({(i + 1) * stride}/{height}, {(j + 1) * stride}/{width})")
+
+					i_range_s, i_range_e = max(0, (i * stride - half_patch)), (i * stride + (patch_size - half_patch))
+					j_range_s, j_range_e = max(0, (j * stride - half_patch)), (j * stride + (patch_size - half_patch))
+					
+					cur_patch_x = cur_x[i_range_s:i_range_e, j_range_s:j_range_e]
+					cur_patch_y = cur_y[i_range_s:i_range_e, j_range_s:j_range_e]
+					cur_patch_t = cur_t[i_range_s:i_range_e, j_range_s:j_range_e]
+
+					A = np.stack([cur_patch_x.flatten(), cur_patch_y.flatten()], axis=1)
+					b = np.reshape(cur_patch_t.flatten(), (-1, 1))
+					x = np.linalg.lstsq(A, b, rcond=None)[0]
+					u, v = x[0:2, 0]
+					flow[f, i, j] = [u, v]
+					sys.stdout.flush()
+			
+			MED_FILTER_SIZE = 7
+			#median filter u and v for each frame
+			flow[f,:,:,0] = ndimage.median_filter(flow[f,:,:,0], size=MED_FILTER_SIZE)
+			flow[f,:,:,1] = ndimage.median_filter(flow[f,:,:,1], size=MED_FILTER_SIZE)
 	
 	print("\n")
 
-	flow[flow < -.1] = -.1
-	flow[flow > .1] = .1
+	# flow[flow < -.1] = -.1
+	# flow[flow > .1] = .1
 	return flow
+
+def gaussian_pyramids(img1, img2, levels):
+	SIGMA = 5
+	RESIZE_FACTOR = 2
+	img1Pyramid = [img1]
+	img2Pyramid = [img2]
+	for level in range(levels):
+		blurredImg1 = ndimage.gaussian_filter(img1Pyramid[len(img1Pyramid) - 1], sigma = SIGMA)
+		resizedImg1 = cv2.resize(blurredImg1, (blurredImg1.shape[1] // RESIZE_FACTOR, blurredImg1.shape[0] // RESIZE_FACTOR))
+		img1Pyramid.append(resizedImg1)
+
+		blurredImg2 = ndimage.gaussian_filter(img2Pyramid[len(img2Pyramid) - 1], sigma = SIGMA)
+		resizedImg2 = cv2.resize(blurredImg2, (blurredImg2.shape[1] // RESIZE_FACTOR, blurredImg2.shape[0] // RESIZE_FACTOR))
+		img2Pyramid.append(resizedImg2)
+	# for img in img1Pyramid:
+	# 	cv2.imshow("img", img)
+	# 	cv2.waitKey(0)
+	img1Pyramid.reverse()
+	img2Pyramid.reverse()
+	return img1Pyramid, img2Pyramid
