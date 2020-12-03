@@ -6,9 +6,9 @@ from scipy.signal import convolve2d
 def ssd(a, b):
 	return np.sum(np.square(a - b))
 
-def naive_optical_flow(frames, patch_size):
+def naive_optical_flow(frames, patch_size, stride):
 	num_frames, height, width, channels = frames.shape
-	num_patches = (height // patch_size, width // patch_size)
+	num_patches = (height // stride, width // stride)
 	flow = np.zeros((num_frames, num_patches[0], num_patches[1], 2))
 
 	for f in range(num_frames-1):
@@ -18,15 +18,15 @@ def naive_optical_flow(frames, patch_size):
 			for x in range(num_patches[1]):
 				sys.stdout.write(f"\rFinding best match for patch ({y + 1}/{num_patches[0]}, {x + 1}/{num_patches[1]})")
 				cur_patch = cur_frame[
-					y*patch_size:(y+1)*patch_size, 
-					x*patch_size:(x+1)*patch_size
+					y*stride:(y+1)*stride, 
+					x*stride:(x+1)*stride
 				]
 				best_patch, best_ssd = (0, 0), float('inf')
 				for i in range(-patch_size // 2, patch_size // 2, 1):
 					for j in range(-patch_size // 2, patch_size // 2):
 						next_patch = next_frame[
-							max(0, y*patch_size + i):y*patch_size + i + patch_size, 
-							max(0, x*patch_size + j):x*patch_size + j + patch_size
+							max(0, y*stride + i):y*stride + i + patch_size, 
+							max(0, x*stride + j):x*stride + j + patch_size
 						]
 						if next_patch.shape != cur_patch.shape: continue
 						error = ssd(cur_patch, next_patch)
@@ -103,4 +103,7 @@ def lucas_kanade(frames, patch_size=5, stride=1):
 				sys.stdout.flush()
 	
 	print("\n")
+
+	flow[flow < -.1] = -.1
+	flow[flow > .1] = .1
 	return flow

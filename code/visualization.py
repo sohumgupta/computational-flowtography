@@ -7,9 +7,9 @@ import time
 
 import io
 
-def show_optical_flow(frames, flow, strides):
+def show_optical_flow(frames, flow, stride):
 	output_frames = []
-
+	epsilon = 1e-3
 	num_frames, height, width, _ = frames.shape
 
 	# plt.ion() 
@@ -23,17 +23,12 @@ def show_optical_flow(frames, flow, strides):
 			cur_flow = flow[i]
 			for row in range(cur_flow.shape[0]):
 				for col in range(cur_flow.shape[1]):
-					if (cur_flow[row, col, 0] == 0 and cur_flow[row, col, 1] == 0): continue
-					start_x, start_y = col * strides[0] + strides[0] // 2, row * strides[1] + strides[1] // 2
+					if (abs(cur_flow[row, col, 0]) < epsilon and abs(cur_flow[row, col, 1]) < epsilon): continue
+					start_x, start_y = col * stride + stride // 2, row * stride + stride // 2
 					flow_x, flow_y = cur_flow[row, col, 0], cur_flow[row, col, 1]
-					if (flow_x > .1): flow_x = .1
-					if (flow_x < -.1): flow_x = -.1
-
-					if (flow_y > .1): flow_y = .1
-					if (flow_y < -.1): flow_y = -.1
-					plt.arrow(start_x, start_y, flow_x * 100, flow_y * 100, color="red")
+					plt.arrow(start_x, start_y, flow_x, flow_y, color="red")
 		plot_img_np = get_img_from_fig(fig).astype('float32')
-		output_frames.append(plot_img_np)		
+		output_frames.append(plot_img_np)
 		# plt.pause(1)
 	# plt.ioff()
 	# plt.show()
