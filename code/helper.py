@@ -32,4 +32,5 @@ def write_video(frames, path, fps = 29.97):
 		videoWriter.write((frame).astype('uint8')) #needs to be converted to uint8 for the codec
 	
 	if videoWriter is not None:
+		print("Successfully wrote out to video", path)
 		videoWriter.release()

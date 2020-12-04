@@ -3,7 +3,7 @@ import argparse
 import cv2
 import os
 from helper import load_video, write_video
-from visualization import show_optical_flow, show_object_tracking
+from visualization import show_optical_flow, show_object_tracking, heatmap
 from flow import naive_optical_flow, naive_object_tracking, lucas_kanade
 
 def parse_args():
@@ -15,6 +15,8 @@ def parse_args():
 	parser.add_argument('--track_x', type=int, help="x-position for object to track")
 	parser.add_argument('--track_y', type=int, help="y-position for object to track")
 	parser.add_argument('--output_path', type=str, help="path to output video")
+	parser.add_argument('--heatmap', action='store_true',
+                    help='Visualize with a heatmap')
 	args = parser.parse_args()
 	if (args.tracking and not (args.track_x and args.track_y)):
 		parser.error("--tracking requires --track_x and --track_y.")
@@ -37,6 +39,7 @@ def main():
 		print(f"Using Lucas-Kanade algorithm.")
 		object_tracking = naive_object_tracking # change this eventually
 		optical_flow = lucas_kanade
+	
 
 	if (args.tracking):
 		frames = frames[0:300]
@@ -48,7 +51,10 @@ def main():
 		patch_size = 5
 		stride = 5
 		flow = optical_flow(frames, patch_size, stride)
-		out_frames = show_optical_flow(frames, flow, stride)
+		# out_frames = show_optical_flow(frames, flow, stride)
+
+	if(args.heatmap):
+		out_frames = heatmap(flow)
 	
 	if (args.output_path is not None):
 		write_video(out_frames, args.output_path)

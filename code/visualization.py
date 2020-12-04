@@ -61,6 +61,31 @@ def show_object_tracking(frames, flow, location):
 
 	return output_frames
 
+def heatmap(flowList):
+	frames = []
+	for flow in flowList:
+		normalizedFlow = (flow) / 0.4
+		colorMap = np.zeros((flow.shape[0], flow.shape[1], 3))
+
+		#g = y and b = x visualization
+		colorMap[:,:,0] = normalizedFlow[:,:,0]
+		colorMap[:,:,1] = normalizedFlow[:,:,1]
+		
+		#euclid dist visualization
+		#colorMap[:,:,1] = np.sqrt(np.square(normalizedFlow[:,:,1]) + np.square(normalizedFlow[:,:,0]))
+
+
+		# angle visualization
+		# mag, ang = cv2.cartToPolar(normalizedFlow[:,:,0], normalizedFlow[:,:,1])
+		# hsv[...,0] = ang*180/np.pi/2
+		# hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+		# rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+
+		frames.append(colorMap * 255)
+	return frames
+
+
+
 #taken from https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array
 # define a function which returns an image as numpy array from figure
 def get_img_from_fig(fig, dpi=180):

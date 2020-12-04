@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import sys
 from scipy.signal import convolve2d
+from scipy import ndimage
 
 def ssd(a, b):
 	return np.sum(np.square(a - b))
@@ -101,6 +102,11 @@ def lucas_kanade(frames, patch_size=5, stride=1):
 				u, v = x[0:2, 0]
 				flow[f, i, j] = [u, v]
 				sys.stdout.flush()
+		
+		MED_FILTER_SIZE = 7
+		#median filter u and v coordinates for each frame
+		flow[f,:,:,0] = ndimage.median_filter(flow[f,:,:,0], size=MED_FILTER_SIZE)
+		flow[f,:,:,1] = ndimage.median_filter(flow[f,:,:,1], size=MED_FILTER_SIZE)
 	
 	print("\n")
 
