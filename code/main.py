@@ -4,7 +4,8 @@ import cv2
 import os
 from helper import load_video, write_video
 from visualization import show_optical_flow, show_object_tracking, heatmap
-from flow import naive_optical_flow, naive_object_tracking, lucas_kanade
+from lucas_kanade import lucas_kanade
+from naive_flow import naive_optical_flow, naive_object_tracking
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Calculating and using optical flow for videos!')

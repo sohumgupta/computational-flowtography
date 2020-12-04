@@ -34,3 +34,6 @@ def write_video(frames, path, fps = 29.97):
 	if videoWriter is not None:
 		print("Successfully wrote out to video", path)
 		videoWriter.release()
+
+def rgb2gray(rgb):
+    return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
