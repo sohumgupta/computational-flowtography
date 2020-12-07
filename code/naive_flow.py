@@ -38,11 +38,11 @@ def naive_optical_flow(frames, patch_size, stride):
 	
 	return flow
 
-def naive_object_tracking(frames, location, patch_size):
+def naive_object_tracking(frames, locations, patch_size):
 	num_frames, height, width, channels = frames.shape
 	flow = np.zeros((num_frames, 2))
 
-	cur_location = location
+	cur_location = locations[0]
 	for f in range(num_frames-1):
 		print(f"Tracking location for frame {f} -> {f+1}...")
 		cur_frame, next_frame = frames[f], frames[f+1]

@@ -25,8 +25,8 @@ def show_optical_flow(frames, flow, stride):
 				for col in range(cur_flow.shape[1]):
 					if (abs(cur_flow[row, col, 0]) < epsilon and abs(cur_flow[row, col, 1]) < epsilon): continue
 					start_x, start_y = col * stride + stride // 2, row * stride + stride // 2
-					flow_x, flow_y = cur_flow[row, col, 0], cur_flow[row, col, 1]
-					plt.arrow(start_x, start_y, flow_x, flow_y, color="red")
+					flow_x, flow_y = cur_flow[row, col, 1], cur_flow[row, col, 0]
+					plt.arrow(start_x, start_y, flow_x, flow_y, color="red", head_width=0.5, head_length=0.5)
 		plot_img_np = get_img_from_fig(fig).astype('float32')
 		output_frames.append(plot_img_np)
 		# plt.pause(1)
@@ -35,29 +35,36 @@ def show_optical_flow(frames, flow, stride):
 
 	return output_frames
 
-def show_object_tracking(frames, flow, location):
+def show_object_tracking(frames, flow, locations):
 	output_frames = []
-
 	num_frames, height, width, channels = frames.shape
 
-	# plt.ion()
-	cur_location = location
+	plt.ion()
+	cur_locations = np.array(locations, dtype=np.float32)
 	for (i, frame) in enumerate(frames):
 		fig = plt.figure()
 
-		darkening = 0.6
+		darkening = 0.5
 		plt.imshow(frame * darkening)
 
 		if i < num_frames:
-			cur_flow = flow[i]
 			arrow_color = matplotlib.colors.hsv_to_rgb([i / num_frames, 1, 1])
-			plt.arrow(cur_location[1], cur_location[0], cur_flow[0], cur_flow[1], color=arrow_color)
-			cur_location = (cur_location[0] + cur_flow[1], cur_location[1] + cur_flow[0])
+			for p in range(len(cur_locations)):
+				cur_flow = flow[p, i]
+				cur_point = cur_locations[p]
+				plt.arrow(
+					int(np.rint(cur_point[1])), int(np.rint(cur_point[0])),
+					-cur_flow[1], cur_flow[0], 
+					color=arrow_color
+				)
+				cur_locations[p] += [cur_flow[1], cur_flow[0]]
 		
 		plot_img_np = get_img_from_fig(fig).astype('float32')
 		output_frames.append(plot_img_np)	
+		# plt.pause(.00001)
 		
 	# plt.ioff()
+	# plt.show()
 
 	return output_frames
 

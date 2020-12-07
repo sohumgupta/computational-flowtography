@@ -3,6 +3,14 @@ import argparse
 import cv2
 import os
 
+def load_tracking_points(file_path):
+	data_path = '../data'
+	points_path = os.path.join(data_path, file_path)
+	points_file = open(points_path, 'r') 
+	points = points_file.readlines() 
+	points = np.array([[int(s.split(",")[1]), int(s.split(",")[0])] for s in points])
+	return points
+
 def load_video(video_path):
 	video = cv2.VideoCapture(video_path)
 	success, frame = video.read()
