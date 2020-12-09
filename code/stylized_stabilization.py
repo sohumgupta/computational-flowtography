@@ -70,7 +70,7 @@ def main():
     # Create Video Writer
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(args.output, fourcc, args.framerate, 
-        (int(window_X * 4),int(window_Y * 4)))
+        (int(window_X * 2),int(window_Y * 2)))
 
 
     while(1):
