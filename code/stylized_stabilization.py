@@ -75,52 +75,56 @@ def main():
 
     while(1):
         ret,frame = cap.read()
-        frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if ret:
+            frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # calculate optical flow
-        p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
+            # calculate optical flow
+            p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
 
-        # Select good points
-        good_new = p1[st==1]
-        #good_old = p0[st==1]
+            # Select good points
+            good_new = p1[st==1]
+            #good_old = p0[st==1]
 
-        
-        ## Keeping this for the ravel() syntax in case I have time to expand to 2 points
-        ##       for scale tracking
-        ## draw the tracks
-        # for i,(new,old) in enumerate(zip(good_new,good_old)):
-        #     a,b = new.ravel()
-        #     c,d = old.ravel()
-        #     mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-        #     frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
-        
-        # Temporarily hardcoded for single point, can expand for scaling later.
-        new_x = int(good_new[0][0])
-        new_y = int(good_new[0][1])
+            
+            ## Keeping this for the ravel() syntax in case I have time to expand to 2 points
+            ##       for scale tracking
+            ## draw the tracks
+            # for i,(new,old) in enumerate(zip(good_new,good_old)):
+            #     a,b = new.ravel()
+            #     c,d = old.ravel()
+            #     mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
+            #     frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
+            
+            # Temporarily hardcoded for single point, can expand for scaling later.
+            new_x = int(good_new[0][0])
+            new_y = int(good_new[0][1])
 
-        frame_x_left = int(max(0, new_x - window_X))
-        frame_x_right = int(min(frame.shape[1], new_x + window_X))
-        frame_y_top = int(max(0, new_y - window_Y))
-        frame_y_bottmom = int(min(frame.shape[0], new_y + window_Y))
-        # Crop & center around single point
-        centered = frame[frame_y_top : frame_y_bottmom , frame_x_left : frame_x_right]
-        
-        out.write(centered)
+            frame_x_left = int(max(0, new_x - window_X))
+            frame_x_right = int(min(frame.shape[1], new_x + window_X))
+            frame_y_top = int(max(0, new_y - window_Y))
+            frame_y_bottmom = int(min(frame.shape[0], new_y + window_Y))
 
-        if not args.silent:
-            cv2.imshow('frame',centered)
+            # Crop & center around single point
+            centered = frame[frame_y_top : frame_y_bottmom , frame_x_left : frame_x_right]
+            
+            out.write(centered)
 
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
+            if not args.silent:
+                cv2.imshow('frame',centered)
+
+            k = cv2.waitKey(30) & 0xff
+            if k == 27:
+                break
+
+            # Now update the previous frame and previous points
+            old_gray = frame_gray.copy()
+            p0 = good_new.reshape(-1,1,2)
+        else:
             break
 
-        # Now update the previous frame and previous points
-        old_gray = frame_gray.copy()
-        p0 = good_new.reshape(-1,1,2)
-
-    cv2.destroyAllWindows()
     cap.release()
     out.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
