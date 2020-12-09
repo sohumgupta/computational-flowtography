@@ -8,7 +8,7 @@ def parseArgs():
     parser.add_argument('-loc','--location', type=int, default=[-1,-1], nargs=2,
         help='the approximate x,y coordinates of the object to track.' + 
             ' Will default to the center of the image')
-    parser.add_argument('-cf', '--crop_factor', type=int, default=2, 
+    parser.add_argument('-cf', '--crop_factor', type=float, default=2, 
         help='The factor by which the final output will be cropped. Defaults to 2')
     parser.add_argument('-o','--output', type=str, default='../results/out.mp4',
         help='Where to save the file. Defaults to ../results/out.mp4')
@@ -70,7 +70,7 @@ def main():
     # Create Video Writer
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(args.output, fourcc, args.framerate, 
-        (window_X * 2,window_Y * 2))
+        (int(window_X * 4),int(window_Y * 4)))
 
 
     while(1):
@@ -98,11 +98,12 @@ def main():
         new_x = int(good_new[0][0])
         new_y = int(good_new[0][1])
 
-        framex_left = max(0, new_x - window_X)
-        framex_right = min(frame.shape[1], new_x + window_X)
+        frame_x_left = int(max(0, new_x - window_X))
+        frame_x_right = int(min(frame.shape[1], new_x + window_X))
+        frame_y_top = int(max(0, new_y - window_Y))
+        frame_y_bottmom = int(min(frame.shape[0], new_y + window_Y))
         # Crop & center around single point
-        centered = frame[new_y - window_Y : new_y + window_Y, 
-                         new_x - window_X : new_x + window_X]
+        centered = frame[frame_y_top : frame_y_bottmom , frame_x_left : frame_x_right]
         
         out.write(centered)
 
